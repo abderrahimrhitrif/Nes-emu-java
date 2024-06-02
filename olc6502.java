@@ -29,82 +29,334 @@ public class olc6502 {
     public byte status = 0x00;
 
     public byte fetched = 0x00;
-    public int addr_bus = 0x0000;
+    public int addr_abs = 0x0000;
     public int addr_rel = 0x00;
     public byte opcode = 0x00;
     public byte cycles = 0;
 
     // Address Modes
-    public byte IMP(){ return 0x00;};
-    public byte IMM(){ return 0x00;};
-    public byte ZP0(){ return 0x00;};
-    public byte ZPX(){ return 0x00;};
-    public byte ZPY(){ return 0x00;};
-    public byte REL(){ return 0x00;};
-    public byte ABS(){ return 0x00;};
-    public byte ABX(){ return 0x00;};
-    public byte ABY(){ return 0x00;};
-    public byte IND(){ return 0x00;};
-    public byte IZX(){ return 0x00;};
-    public byte IZY(){ return 0x00;};
+    public byte IMP(){ 
+        fetched = a;
+        return 0x00;};
+    public byte IMM(){ 
+        addr_abs = pc++;
+        return 0x00;};
+    public byte ZP0(){ 
+        addr_abs = read(pc++);
+        addr_abs &= 0x00FF;
+        return 0x00;};
+    public byte ZPX(){ 
+        addr_abs = read(pc) + x;
+        pc++;
+        addr_abs &= 0x00FF;
+        return 0x00;};
+    public byte ZPY(){ 
+        addr_abs = read(pc) + x;
+        pc++;
+        addr_abs &= 0x00FF;
+        return 0x00;};
+    public byte REL(){ 
+        addr_rel = read(pc++);
+        if(addr_rel & 0x80) {
+            addr_rel |= 0xFF00;
+        }
+        return 0x00;};
+    public byte ABS(){ 
+        int hi = read(pc++);        
+        int lo = read(pc++);
+
+        addr_abs = (hi << 8) | lo;
+        return 0x00;};
+    public byte ABX(){ 
+        int hi = bus.read(pc++);
+        int lo = bus.read(pc++);
+
+        addr_abs = (hi << 8) | lo;
+        addr_abs += x;
+        if ((addr_abs & 0xFF00) != (hi << 8)) {
+            return 1;
+        }
+        return 0x00;
+    };
+
+    public byte ABY() {
+        int hi = read(pc++);
+        int lo = read(pc++);
+
+        addr_abs = (hi << 8) | lo;
+        addr_abs += y;
+        if ((addr_abs & 0xFF00) != (hi << 8)) {
+            return 1;
+        }
+        return 0x00;
+    };
+
+    public byte IND() {
+        int ptr_lo = bus.read(pc++);
+        int ptr_hi = bus.read(pc++);
+
+        int ptr = (ptr_hi << 8) | ptr_lo;
+        if(ptr_lo == 0x00FF) {
+        addr_abs = (read(ptr & 0x00FF) << 8) | read((ptr + 0) );
+        }
+        else{
+        addr_abs = (read(ptr + 1) << 8) | read(ptr + 0);
+        }
+        return 0x00;
+    };
+
+    public byte IZX() {
+        int t = read(pc++);
+        
+        int lo = read(t + x) & 0x00FF;
+        int hi = read(t + x + 1) & 0x00FF;
+
+        addr_abs = (hi << 8) | lo;
+
+        return 0x00;
+    };
+
+    public byte IZY() {
+        int t = read(pc++);
+        int lo = read(t & 0x00FF);
+        int hi = read((t + 1) & 0x00FF);
+        addr_abs = (hi << 8) | lo;
+        if ((addr_abs & 0xFF00) != (hi << 8)) {
+            return 1;
+        }
+        else{
+        return 0x00;
+        }
+    };
+
     // Opcodes
-    public byte ADC(){ return 0x00;};
-    public byte AND(){ return 0x00;};
-    public byte ASL(){ return 0x00;};
-    public byte BCC(){ return 0x00;};
-    public byte BCS(){ return 0x00;};
-    public byte BEQ(){ return 0x00;};
-    public byte BIT(){ return 0x00;};
-    public byte BMI(){ return 0x00;};
-    public byte BNE(){ return 0x00;};
-    public byte BPL(){ return 0x00;};
-    public byte BRK(){ return 0x00;};
-    public byte BVC(){ return 0x00;};
-    public byte BVS(){ return 0x00;};
-    public byte CLC(){ return 0x00;};
-    public byte CLD(){ return 0x00;};
-    public byte CLI(){ return 0x00;};
-    public byte CLV(){ return 0x00;};
-    public byte CMP(){ return 0x00;};
-    public byte CPX(){ return 0x00;};
-    public byte CPY(){ return 0x00;};
-    public byte DEC(){ return 0x00;};
-    public byte DEX(){ return 0x00;};
-    public byte DEY(){ return 0x00;};
-    public byte EOR(){ return 0x00;};
-    public byte INC(){ return 0x00;};
-    public byte INX(){ return 0x00;};
-    public byte INY(){ return 0x00;};
-    public byte JMP(){ return 0x00;};
-    public byte JSR(){ return 0x00;};
-    public byte LDA(){ return 0x00;};
-    public byte LDX(){ return 0x00;};
-    public byte LDY(){ return 0x00;};
-    public byte LSR(){ return 0x00;};
-    public byte NOP(){ return 0x00;};
-    public byte ORA(){ return 0x00;};
-    public byte PHA(){ return 0x00;};
-    public byte PHP(){ return 0x00;};
-    public byte PLA(){ return 0x00;};
-    public byte PLP(){ return 0x00;};
-    public byte ROL(){ return 0x00;};
-    public byte ROR(){ return 0x00;};
-    public byte RTI(){ return 0x00;};
-    public byte RTS(){ return 0x00;};
-    public byte SBC(){ return 0x00;};
-    public byte SEC(){ return 0x00;};
-    public byte SED(){ return 0x00;};
-    public byte SEI(){ return 0x00;};
-    public byte STA(){ return 0x00;};
-    public byte STX(){ return 0x00;};
-    public byte STY(){ return 0x00;};
-    public byte TAX(){ return 0x00;};
-    public byte TAY(){ return 0x00;};
-    public byte TSX(){ return 0x00;};
-    public byte TXA(){ return 0x00;};
-    public byte TXS(){ return 0x00;};
-    public byte TYA(){ return 0x00;};
-    public byte XXX(){ return 0x00;};
+    public byte ADC() {
+        return 0x00;
+    };
+
+    public byte AND() {
+        return 0x00;
+    };
+
+    public byte ASL() {
+        return 0x00;
+    };
+
+    public byte BCC() {
+        return 0x00;
+    };
+
+    public byte BCS() {
+        return 0x00;
+    };
+
+    public byte BEQ() {
+        return 0x00;
+    };
+
+    public byte BIT() {
+        return 0x00;
+    };
+
+    public byte BMI() {
+        return 0x00;
+    };
+
+    public byte BNE() {
+        return 0x00;
+    };
+
+    public byte BPL() {
+        return 0x00;
+    };
+
+    public byte BRK() {
+        return 0x00;
+    };
+
+    public byte BVC() {
+        return 0x00;
+    };
+
+    public byte BVS() {
+        return 0x00;
+    };
+
+    public byte CLC() {
+        return 0x00;
+    };
+
+    public byte CLD() {
+        return 0x00;
+    };
+
+    public byte CLI() {
+        return 0x00;
+    };
+
+    public byte CLV() {
+        return 0x00;
+    };
+
+    public byte CMP() {
+        return 0x00;
+    };
+
+    public byte CPX() {
+        return 0x00;
+    };
+
+    public byte CPY() {
+        return 0x00;
+    };
+
+    public byte DEC() {
+        return 0x00;
+    };
+
+    public byte DEX() {
+        return 0x00;
+    };
+
+    public byte DEY() {
+        return 0x00;
+    };
+
+    public byte EOR() {
+        return 0x00;
+    };
+
+    public byte INC() {
+        return 0x00;
+    };
+
+    public byte INX() {
+        return 0x00;
+    };
+
+    public byte INY() {
+        return 0x00;
+    };
+
+    public byte JMP() {
+        return 0x00;
+    };
+
+    public byte JSR() {
+        return 0x00;
+    };
+
+    public byte LDA() {
+        return 0x00;
+    };
+
+    public byte LDX() {
+        return 0x00;
+    };
+
+    public byte LDY() {
+        return 0x00;
+    };
+
+    public byte LSR() {
+        return 0x00;
+    };
+
+    public byte NOP() {
+        return 0x00;
+    };
+
+    public byte ORA() {
+        return 0x00;
+    };
+
+    public byte PHA() {
+        return 0x00;
+    };
+
+    public byte PHP() {
+        return 0x00;
+    };
+
+    public byte PLA() {
+        return 0x00;
+    };
+
+    public byte PLP() {
+        return 0x00;
+    };
+
+    public byte ROL() {
+        return 0x00;
+    };
+
+    public byte ROR() {
+        return 0x00;
+    };
+
+    public byte RTI() {
+        return 0x00;
+    };
+
+    public byte RTS() {
+        return 0x00;
+    };
+
+    public byte SBC() {
+        return 0x00;
+    };
+
+    public byte SEC() {
+        return 0x00;
+    };
+
+    public byte SED() {
+        return 0x00;
+    };
+
+    public byte SEI() {
+        return 0x00;
+    };
+
+    public byte STA() {
+        return 0x00;
+    };
+
+    public byte STX() {
+        return 0x00;
+    };
+
+    public byte STY() {
+        return 0x00;
+    };
+
+    public byte TAX() {
+        return 0x00;
+    };
+
+    public byte TAY() {
+        return 0x00;
+    };
+
+    public byte TSX() {
+        return 0x00;
+    };
+
+    public byte TXA() {
+        return 0x00;
+    };
+
+    public byte TXS() {
+        return 0x00;
+    };
+
+    public byte TYA() {
+        return 0x00;
+    };
+
+    public byte XXX() {
+        return 0x00;
+    };
 
     private void initializeInstructions() {
         lookup.add(new Instruction("BRK", (cpu) -> cpu.BRK(), (cpu) -> cpu.IMM(), (byte) 7));
