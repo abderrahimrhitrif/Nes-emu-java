@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 public class Instruction{
     public String name;
-    public Function<cpu, byte> operate;
-    public Function<cpu, byte> addrmode;
+    public Function operate;
+    public Function addrmode;
     public byte cycles;
 
     public Instruction(String name, Function operate, Function addrmode, byte cycles){
@@ -378,7 +378,7 @@ public class olc6502 {
 }
 
     public olc6502(){
-        
+        initializeInstructions();
     }
 
     public void connectBus(Bus n) {
@@ -393,7 +393,18 @@ public class olc6502 {
         bus.write(addr, data);
     }
     public void clock(){
+        if (cycles == 0){
         opcode = read(pc);
         pc++;
+        Instruction instruction = lookup.get(opcode & 0xFF);
+        cycles = instruction.cycles;
+
+        if ((instruction.addrmode != null) && (instruction.operate != null)){
+            byte additinal_cycle1 = (byte) instruction.addrmode.apply(this);
+            byte additinal_cycle2 = (byte) instruction.operate.apply(this);
+            cycles += additinal_cycle1 + additinal_cycle2;
+        }
+        cycles--;
+    }
     }
 }
